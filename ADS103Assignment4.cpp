@@ -4,131 +4,168 @@
 #include <iostream>
 #include <vector>
 #include <tuple>
+#include <string>
 
 
 using namespace std;
 
 
 
-class Player
+class TicTacToe
 {
 public:
+
+    string startingBoard[25] = {" 1 ", " | ", " 2 ", " | ", " 3 ",     //  0   2   4
+                                "---", " | ", "---", " | ", "---",
+                                " 4 ", " | ", " 5 ", " | ", " 6 ",      //  10  12  14
+                                "---", " | ", "---", " | ", "---",
+                                " 7 ", " | ", " 8 ", " | ", " 9 " };    //  20  22  24
+
+
+    string displayBoard[25] = { " 1 ", " | ", " 2 ", " | ", " 3 ",      
+                                "---", " | ", "---", " | ", "---",
+                                " 4 ", " | ", " 5 ", " | ", " 6 ",      
+                                "---", " | ", "---", " | ", "---",
+                                " 7 ", " | ", " 8 ", " | ", " 9 " };    
+
+
+              // Numbers     1    2    3    4    5    6    7    8    9
+    string gameBoard[9] = { "#", "#", "#", "#", "#", "#", "#", "#", "#"};
+                // Index     0    1    2    3    4    5    6    7    8  
+              
+
 
     string playerMark = "";
+    bool isHuman = true;
 
-    Player()
-    {
-        playerMark;
-    }
-};
-
-class Board
-{
-public:
-
-    string displayBoard[5][5] = { {" X ", " | ", " X ", " | ", " X "},      // (0,0) (0,2) (0,4)
-                                  {"---", " | ", "---", " | ", "---"},
-                                  {" 4 ", " | ", " 5 ", " | ", " 6 "},      // (2,0) (2,2) (2,4)
-                                  {"---", " | ", "---", " | ", "---"},
-                                  {" 7 ", " | ", " 8 ", " | ", " 9 "} };    // (4,0) (4,2) (4,4)
-    
-    string gameBoard[3][3] = { {"X","2","3"},       // 00 01 02
-                               {"4","5","6"},       // 10 11 12
-                               {"7","8","9"} };     // 20 21 22
-
-    Board()
+    TicTacToe()
     {
         displayBoard;
         gameBoard;
-
+        playerMark;
+        isHuman;
     }
 
-    bool winner(Board b, Player x)
-    {
-        bool playerX = true;
-        string p = x.playerMark;
-        cout <<"player mark = " << p << endl;
-        if(p == "O")
-            bool playerX = false;
-        
-
-        if (playerX)
-            p = "X";
-        else
-            p = "O";
-        if ((b.gameBoard[0][0] == p && b.gameBoard[0][1] == p && b.gameBoard[0][2] == p) ||
-            (b.gameBoard[1][0] == p && b.gameBoard[1][1] == p && b.gameBoard[1][2] == p) ||
-            (b.gameBoard[2][0] == p && b.gameBoard[2][1] == p && b.gameBoard[2][2] == p) ||
-            (b.gameBoard[0][0] == p && b.gameBoard[1][0] == p && b.gameBoard[2][0] == p) ||
-            (b.gameBoard[0][1] == p && b.gameBoard[1][1] == p && b.gameBoard[2][1] == p) ||
-            (b.gameBoard[0][2] == p && b.gameBoard[1][2] == p && b.gameBoard[2][2] == p) ||
-            (b.gameBoard[0][0] == p && b.gameBoard[1][1] == p && b.gameBoard[2][2] == p) ||
-            (b.gameBoard[0][2] == p && b.gameBoard[1][1] == p && b.gameBoard[2][0] == p))
+    // Returns true if the current player has won the game
+    bool winner(string board[], string mark)
+    {       
+        if ((board[0] == mark && board[1] == mark && board[2] == mark) ||
+            (board[3] == mark && board[4] == mark && board[5] == mark) ||
+            (board[6] == mark && board[7] == mark && board[8] == mark) ||
+            (board[0] == mark && board[3] == mark && board[6] == mark) ||
+            (board[1] == mark && board[4] == mark && board[7] == mark) ||
+            (board[2] == mark && board[5] == mark && board[8] == mark) ||
+            (board[0] == mark && board[4] == mark && board[8] == mark) ||
+            (board[2] == mark && board[4] == mark && board[6] == mark))
             return true;
         else
             return false;
     }
-    
-    vector<tuple<int, int>> actions(Board b, Player p)
-    {
-        vector<tuple<int, int>> possibleActions;
-        tuple <int, int> temp;
 
-        for (int i = 0; i < 3; i++)
+    // Returns all the possible locations that are 
+    // not occupied with either an 'X' or 'O'
+    vector<int> actions(string board[])
+    {
+        vector<int> possibleActions;
+     
+        for (int i = 0; i < 9; i++)
         {
-            for (int j = 0; j < 3; j++)
-                if (b.gameBoard[i][j] != "X" && b.gameBoard[i][j] != "O")
-                {
-                    temp = make_tuple(i, j);
-                    possibleActions.push_back(temp);
-                }
+            if (board[i] == "#")
+            {
+                possibleActions.push_back(i);
+            }
         }
+        if (possibleActions.empty())
+            possibleActions.push_back(-1); // Full board
+
         return possibleActions;
     }
-        
+
+    // Returns the current player
+    string nextPlayer(string board[])
+    {
+        int count = 0;
+
+        for (int i = 0; i < 9; i++)
+            if (board[i] == "#")
+                count += 1;
+               
+        if (count % 2 == 0)
+            return "X";
+        else
+            return "O";
+    }
+
+    int utility(string board[])
+    {
+        int result = 0;
+
+        if (winner(board, "X"))
+            result = 1;
+        else if (winner(board, "O"))
+            result = -1;
+
+        return result;
+    }
+
+    bool terminal(string board[], string mark)
+    {
+        bool fullBoard = true;
+
+        for (int i = 0; i < 9; i++)
+            if (board[i] == "#")
+                fullBoard = false;
+
+        return fullBoard || winner(board, mark);
+    }
+
+    int minValue(string board[])
+    {
+        if(terminal(board))
+    }
+
 };
-
-
-
-
-
 
 
 int main()
 {
-    Player p;
-    p.playerMark = "X";
-    Board b;
 
-    vector<tuple<int, int>> pActions;
+    TicTacToe ttt;
+    ttt.gameBoard;
+    ttt.playerMark = "X";
 
-    pActions = b.actions(b, p);
+    // Declares a vector to hold the available moves
+    // possible by the current player
+    vector<int> actions;
+    actions = ttt.actions(ttt.gameBoard);
 
-    for (int i = 0; i < 5; i++)
-    {
-        cout << "\n";
-        for (int j = 0; j < 5; j++)
-            cout << b.displayBoard[i][j];
-    }
-        
- 
-    cout << "\n" << b.gameBoard[0][0] << b.gameBoard[0][1] << b.gameBoard[0][2] << endl;
+    int size = actions.size();
+    int result = ttt.utility(ttt.gameBoard);
+
+    for (int i = 0; i < size; i++)
+        cout << actions[i];
+
+    cout << "\n";
+
+    string cPlayer = ttt.nextPlayer(ttt.gameBoard);
+    cout << "current player returns: " << cPlayer << endl;
+
+    bool yeahOrNay = ttt.winner(ttt.gameBoard, ttt.nextPlayer(ttt.gameBoard));
+
+    if (yeahOrNay)
+        cout << "Win is true";
+    else
+        cout << "Win is false";
+
+    cout << "\nUtility: " << result << endl;
     
-    cout << "\n\n\n\n\n";
+    bool isTerminal = ttt.terminal(ttt.gameBoard, ttt.nextPlayer(ttt.gameBoard));
+
+    if (isTerminal)
+        cout << "Terminal is true";
+    else
+        cout << "Terminal is false";
         
-    bool yeah = b.winner(b, p);
-
-    if(yeah)
-        cout << "true";
-    if (!yeah)
-        cout << "false";
-
-    cout << "\n" << b.displayBoard[4][4];
-
-    int size = pActions.size();
-
-   
-
-    
+    cout << "\n\n\n\n\n\n";
 }
 
