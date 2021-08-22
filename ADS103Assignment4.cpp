@@ -1,171 +1,329 @@
-// ADS103Assignment4.cpp 
-// Marcus Boreham
-
 #include <iostream>
 #include <vector>
 #include <tuple>
 #include <string>
-
+#include <limits>
+#include <algorithm>
+#include <cctype>
+#include <map>
 
 using namespace std;
 
 
+//						   '#','#','#',
 
 class TicTacToe
 {
 public:
 
-    string startingBoard[25] = {" 1 ", " | ", " 2 ", " | ", " 3 ",     //  0   2   4
-                                "---", " | ", "---", " | ", "---",
-                                " 4 ", " | ", " 5 ", " | ", " 6 ",      //  10  12  14
-                                "---", " | ", "---", " | ", "---",
-                                " 7 ", " | ", " 8 ", " | ", " 9 " };    //  20  22  24
+	char X = 'X';
+	char O = 'O';
+
+	vector<char> logicBoard = { '#','#','#',
+								'#','#','#',
+								'#','#','#' };
+
+	vector<char> letters = { 'A','B','C','D','E','F','G','H','I' };
+	vector<char> gameBoard = { 'A','B','C','D','E','F','G','H','I' };
+
+	TicTacToe()
+	{
+		X;
+		O;
+		gameBoard;
+		letters;
+	}
+
+	char player(vector<char> board)
+	{
+		int count = 0;
+
+		for (int i = 0; i < 9; i++)
+			if (board[i] == '#')
+				count += 1;
+
+		if (count % 2 == 0)
+			return 'O';
+		else
+			return 'X';
+	}
+
+	vector<int> actions(vector<char> board)
+	{
+		vector<int> temp;
+
+		for (int i = 0; i < 9; i++)
+			if (board[i] == '#')
+				temp.push_back(i);
+
+		return temp;
+	}
+
+	vector<char> result(vector<char> board, int action)
+	{
+		vector<char> tempBoard;
+
+		copy(board.begin(), board.end(), back_inserter(tempBoard));
+
+		tempBoard[action] = player(tempBoard);
+
+		return tempBoard;
+	}
+
+	char winner(vector<char> board)
+	{
+		bool swap = false;
+		char mark = ' ';
+
+		for (int i = 0; i < 2; i++)
+		{
+			if (!swap)
+				mark = 'X';
+			else
+				mark = 'O';
+
+			if ((board[0] == mark && board[1] == mark && board[2] == mark) ||
+				(board[3] == mark && board[4] == mark && board[5] == mark) ||
+				(board[6] == mark && board[7] == mark && board[8] == mark) ||
+				(board[0] == mark && board[3] == mark && board[6] == mark) ||
+				(board[1] == mark && board[4] == mark && board[7] == mark) ||
+				(board[2] == mark && board[5] == mark && board[8] == mark) ||
+				(board[0] == mark && board[4] == mark && board[8] == mark) ||
+				(board[2] == mark && board[4] == mark && board[6] == mark))
+				return mark;
+
+			swap = true;
+		}
+		return '#';
+	}
+
+	bool terminal(vector<char> board)
+	{
+		bool noSpace = true;
+
+		for (int i = 0; i < 9; i++)
+			if (board[i] == '#')
+				noSpace = false;
+
+		return noSpace || winner(board) == X || winner(board) == O;
+	}
+
+	int utility(vector<char> board)
+	{
+		int result = 0;
+
+		if (winner(board) == X)
+			result = 1;
+		else if (winner(board) == O)
+			result = -1;
+
+		return result;
+	}
+
+	bool validInput(vector<char> board, char input)
+	{
+		bool valid = false;
+		char move = (char)toupper(input);
+
+		for (int i = 0; i < 9; i++)
+		{
+			if (move == letters[i])
+				valid = true;
+		}
 
 
-    string displayBoard[25] = { " 1 ", " | ", " 2 ", " | ", " 3 ",      
-                                "---", " | ", "---", " | ", "---",
-                                " 4 ", " | ", " 5 ", " | ", " 6 ",      
-                                "---", " | ", "---", " | ", "---",
-                                " 7 ", " | ", " 8 ", " | ", " 9 " };    
+		return valid;
+	}
+
+	int minValue(vector<char> board)
+	{
+		if (terminal(board))
+			return utility(board);
+
+		int value = 1000;
+
+		for (auto& action : actions(board))
+			value = min(value, maxValue(result(board, action)));
+
+		return value;
+	}
+
+	int maxValue(vector<char> board)
+	{
+		if (terminal(board))
+			return utility(board);
+
+		int value = -1000;
+
+		for (auto& action : actions(board))
+			value = max(value, minValue(result(board, action)));
+
+		return value;
+	}
+
+	int Minimax(vector<char> board)
+	{
+		int optimal = -3;
+		int value = -4;
+
+		if (player(board) == X)
+		{
+			value = -1000;
+
+			for (auto& action : actions(board))
+			{
+				int newValue = minValue(result(board, action));
+
+				if (newValue > value)
+				{
+					value = newValue;
+					optimal = action;
+				}
+			}
+		}
+		else if (player(board) == O)
+		{
+			value = 1000;
+
+			for (auto& action : actions(board))
+			{
+				int newValue = maxValue(result(board, action));
+				if (newValue < value)
+				{
+					value = newValue;
+					optimal = action;
+				}
+			}
+		}
+
+		return optimal;
+	}
+
+	void displayBoard(vector<char> board)
+	{
+		for (int i = 0; i < 9; i++)
+		{
+			if (board[i] == 'X')
+				letters[i] = 'X';
+			else if (board[i] == 'O')
+				letters[i] = 'O';
+		}
+
+		for (int i = 0; i < 9; i++)
+		{
+			if (i % 3 == 0)
+				cout << "\n\t";
+			cout << letters[i];
+		}
+		cout << endl;
+	}
+
+	int menu()
+	{
+		int selection;
+		cout << "\n\t\tWelcome to Tic Tac Toe\n\n\tPlease make a selection: " << endl;
+		cout << "\n\t1. Play: \n\t2. Exit: ";
+		cin >> selection;
+
+		return selection;
+	}
 
 
-              // Numbers     1    2    3    4    5    6    7    8    9
-    string gameBoard[9] = { "#", "#", "#", "#", "#", "#", "#", "#", "#"};
-                // Index     0    1    2    3    4    5    6    7    8  
-              
 
+	void playGame(vector<char> board)
+	{
+		bool continuePlaying = true;
+		char player = X;
+		char input;
+		int bestMove;
 
-    string playerMark = "";
-    bool isHuman = true;
+		int choice = menu();
 
-    TicTacToe()
-    {
-        displayBoard;
-        gameBoard;
-        playerMark;
-        isHuman;
-    }
+		if (choice == 2)
+			continuePlaying = false;
 
-    // Returns true if the current player has won the game
-    bool winner(string board[], string mark)
-    {       
-        if ((board[0] == mark && board[1] == mark && board[2] == mark) ||
-            (board[3] == mark && board[4] == mark && board[5] == mark) ||
-            (board[6] == mark && board[7] == mark && board[8] == mark) ||
-            (board[0] == mark && board[3] == mark && board[6] == mark) ||
-            (board[1] == mark && board[4] == mark && board[7] == mark) ||
-            (board[2] == mark && board[5] == mark && board[8] == mark) ||
-            (board[0] == mark && board[4] == mark && board[8] == mark) ||
-            (board[2] == mark && board[4] == mark && board[6] == mark))
-            return true;
-        else
-            return false;
-    }
+		while (continuePlaying)
+		{
 
-    // Returns all the possible locations that are 
-    // not occupied with either an 'X' or 'O'
-    vector<int> actions(string board[])
-    {
-        vector<int> possibleActions;
-     
-        for (int i = 0; i < 9; i++)
-        {
-            if (board[i] == "#")
-            {
-                possibleActions.push_back(i);
-            }
-        }
-        if (possibleActions.empty())
-            possibleActions.push_back(-1); // Full board
+			if (terminal(board))
+			{
+				if (utility(board) == 0)
+				{
+					cout << "\nit's a tie!" << endl;
+					continuePlaying = false;
+				}
+				else
+				{
+					cout << "\nThe winner is " << winner(board) << endl;
+					continuePlaying = false;
+				}
+			}
+			else
+			{
+				if (player == X)
+				{
 
-        return possibleActions;
-    }
+					char input = ' ';
+					bool valid = false;
+					displayBoard(board);
+					cout << "\n\tYou are player X..." << endl;
+					cout << "\n\tEnter the letter corresponding to where you wish to move: ";
+					cin >> input;
 
-    // Returns the current player
-    string nextPlayer(string board[])
-    {
-        int count = 0;
+					valid = validInput(board, input);
 
-        for (int i = 0; i < 9; i++)
-            if (board[i] == "#")
-                count += 1;
-               
-        if (count % 2 == 0)
-            return "X";
-        else
-            return "O";
-    }
+					while (!valid)
+					{
+						cout << "\n\tYou are player X..." << endl;
+						cout << "\n\tEnter the letter corresponding to where you wish to move: ";
+						cin >> input;
+						valid = validInput(board, input);
+					}
 
-    int utility(string board[])
-    {
-        int result = 0;
+					input = (char)toupper(input);
 
-        if (winner(board, "X"))
-            result = 1;
-        else if (winner(board, "O"))
-            result = -1;
+					//displayBoard(board);
+					for (int i = 0; i < 9; i++)
+					{
+						if (input == letters[i])
+							board[i] = X;
+					}
+					displayBoard(board);
+					player = O;
 
-        return result;
-    }
-
-    bool terminal(string board[], string mark)
-    {
-        bool fullBoard = true;
-
-        for (int i = 0; i < 9; i++)
-            if (board[i] == "#")
-                fullBoard = false;
-
-        return fullBoard || winner(board, mark);
-    }
-
-    int minValue(string board[])
-    {
-        if(terminal(board))
-    }
-
+				}
+				else
+				{
+					cout << "\n\tComputers move..." << endl;
+					bestMove = Minimax(board);
+					board[bestMove] = O;
+					//displayBoard(board);
+					player = X;
+				}
+			}
+		}
+	}
 };
-
 
 int main()
 {
 
-    TicTacToe ttt;
-    ttt.gameBoard;
-    ttt.playerMark = "X";
+	TicTacToe ttt;
+	vector<char> board = ttt.logicBoard;
+	//vector<char> newBoard = ttt.result(board, 1);
+	//int size = newBoard.size();
 
-    // Declares a vector to hold the available moves
-    // possible by the current player
-    vector<int> actions;
-    actions = ttt.actions(ttt.gameBoard);
+	char win = ttt.winner(board);
 
-    int size = actions.size();
-    int result = ttt.utility(ttt.gameBoard);
+	//int bestMove = ttt.Minimax(board);
 
-    for (int i = 0; i < size; i++)
-        cout << actions[i];
+	//cout << bestMove;
 
-    cout << "\n";
+	bool gameOver = ttt.terminal(board);
+	char player = 'X';
 
-    string cPlayer = ttt.nextPlayer(ttt.gameBoard);
-    cout << "current player returns: " << cPlayer << endl;
 
-    bool yeahOrNay = ttt.winner(ttt.gameBoard, ttt.nextPlayer(ttt.gameBoard));
 
-    if (yeahOrNay)
-        cout << "Win is true";
-    else
-        cout << "Win is false";
+	ttt.playGame(board);
 
-    cout << "\nUtility: " << result << endl;
-    
-    bool isTerminal = ttt.terminal(ttt.gameBoard, ttt.nextPlayer(ttt.gameBoard));
-
-    if (isTerminal)
-        cout << "Terminal is true";
-    else
-        cout << "Terminal is false";
-        
-    cout << "\n\n\n\n\n\n";
 }
-
